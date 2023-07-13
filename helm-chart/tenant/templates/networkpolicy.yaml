@@ -1,0 +1,42 @@
+# ingress, egress 블록 명시 안 할경우 기본적으로 모두 차단
+# 따로 명시할 경우 모두 허용
+# namespace와 podselector and조건일 경우 "-" 생략
+# or조건일 경우 "-"붙이기
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "tenant.fullname" . }}-network-policy
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      service: {{ include "tenant.fullname" . }}
+      zone: tenant
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        #das ns의 odi-da-service에서 오는
+        - namespaceSelector:
+            matchLabels:
+              zone: das
+          podSelector:
+            matchLabels:
+              service: odi-da-service
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              zone: das
+          podSelector:
+            matchLabels:
+              service: odi-da-service
+      ports:
+        - protocol: TCP
+          port: 80
+

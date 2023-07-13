@@ -1,0 +1,40 @@
+# ingress, egress 블록 명시 안 할경우 기본적으로 모두 차단
+# 따로 명시할 경우 모두 허용
+# namespace와 podselector and조건일 경우 "-" 생략
+# or조건일 경우 "-"붙이기
+# tpl형식으로 동적으로 받는 것도 해야하나? -> 직관성문제 + 시간적여유
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "odi-da-service.fullname" . }}-network-policy
+  namespace: {{ .Values.namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      service: {{ include "odi-da-service.fullname" . }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              zone: tenant
+          podSelector:
+            matchLabels:
+              service: odi-da-tenant
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              zone: tenant
+          podSelector:
+            matchLabels:
+              service: odi-da-tenant
+      ports:
+        - protocol: TCP
+          port: 80
+
